@@ -1,11 +1,11 @@
 # LSTM-based Forex trader
 
-Forex trading robot using FCSApi for data and MetaApi for MT5 server.
+Forex trading robot using FCSApi for data and MetaApi as MT5 server.
 Use your own API key
 
-How it works?
+## How it works?
 
-1. Preapring 3 years of data
+1. Preparing 3 years of data
 2. Training model on data
 3. Predict next hour price
 4. Sleep for 1 hour
@@ -15,11 +15,12 @@ How it works?
 8. Calculate difference between previous and current predict
 9. Open position based on difference
 10. Profit
+11. Continuing every hour...
 
-Dependencies:
-Python 3.8+
-Tensorflow
-TA-Lib
-Matplotlib
-metaapi-cloud-sdk
-Sklearn
+## Dependencies:
+- Python 3.8+
+- Tensorflow
+- TA-Lib
+- Matplotlib
+- metaapi-cloud-sdk
+- Sklearn
