@@ -1,14 +1,14 @@
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-import tensorflow as tf
 from matplotlib import pyplot
 import mt_part
-from time import sleep
-import talib
+import numpy as np
+import pandas as pd
 import requests
 from sklearn.preprocessing import MinMaxScaler
+from time import sleep
+import talib
+import tensorflow as tf
 from tensorflow.keras import Sequential, layers
+
 tf.get_logger().setLevel('ERROR')
 
 
