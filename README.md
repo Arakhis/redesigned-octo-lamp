@@ -1,6 +1,6 @@
 # LSTM-based Forex trader
 
-Forex trading robot using FSCApi for data and MetaApi for MT5 server.
+Forex trading robot using FCSApi for data and MetaApi for MT5 server.
 Use your own API key
 
 How it works?
