@@ -1,19 +1,48 @@
 from metaapi_cloud_sdk import MetaApi
 
-token = ''
-api = MetaApi(token=token)
-account = api.metatrader_account_api.get_account_by_token()
-connection = account.get_rpc_connection()
-connection.connect()
-connection.wait_synchronized()
-
-symbol = 'XAUUSD'
+symbolo = 'XAUUSD'
 lot = 0.01
 
-def make_order(type):
-    if type == 'Buy':
-        connection.create_market_buy_order(symbol=symbol, volume=lot, take_profit=100, options={'comment': 'Py'})
-        return print('Successfully BUY')
+async def make_order(type):
+    token = ''
+    api = MetaApi(token=token)
+    account = await api.metatrader_account_api.get_account(account_id='622f717f-8074-4357-8522-0c33f5f18035')
+    if account.state == 'DEPLOYING':
+        print('Detected DEPLOYING state. Waiting deployed')
+        await account.wait_deployed()
+    elif account.state != 'DEPLOYED' and account.state != 'DEPLOYING':
+        print('Deploying account')
+        await account.deploy()
+        print('Waiting deployed')
+        await account.wait_deployed()
     else:
-        connection.create_market_sell_order(symbol=symbol, volume=lot, take_profit=100, options={'comment': 'Py'})
-        return print('Successfully SELL')
+        print('Already deployed. Skipping')
+    print('Deployed. Connecting...')
+    await account.wait_connected()
+    print('Account connected')
+    connection = account.get_streaming_connection()
+    print('Establishing connection')
+    await connection.connect()
+    print('Started sync')
+    await connection.wait_synchronized()
+    print('Subscribing to market data')
+    await connection.subscribe_to_market_data(symbolo)
+    print('Activating terminal state')
+    terminalState = connection.terminal_state
+    if type == 'Buy':
+        print('Creating BUY order')
+        await connection.create_market_buy_order(symbol=symbolo, volume=lot,
+                                                 take_profit=terminalState.price(symbol=symbolo)['ask'] + 1.0,
+                                                 options={'comment': 'Py'})
+        print('Successfully BUY')
+    else:
+        print('Creating SELL order')
+        await connection.create_market_sell_order(symbol=symbolo, volume=lot,
+                                                  take_profit=terminalState.price(symbol=symbolo)['bid'] - 1.0,
+                                                  options={'comment': 'Py'})
+        print('Successfully SELL')
+    print('Closing connection')
+    await connection.close()
+    print('Undeploying account')
+    await account.undeploy()
+    print('Done')

@@ -1,3 +1,5 @@
+import asyncio
+from datetime import timedelta
 from matplotlib import pyplot
 import mt_part
 import numpy as np
@@ -16,7 +18,7 @@ tf.get_logger().setLevel('ERROR')
 
 
 url = 'https://fcsapi.com/api-v3/forex/history'
-api_key = 'foLmNoRHQHs4VrIBVXutMH'
+api_key = ''
 symbol = 'XAU/USD'
 period = '1h'
 level = '3'
@@ -27,7 +29,7 @@ params = f'symbol={symbol}&' \
          f'level={level}&' \
          f'access_key={api_key}'
 
-frame = pd.DataFrame()
+init_frame = pd.DataFrame()
 time = []
 open = []
 high = []
@@ -45,7 +47,7 @@ for x in raw_data['response']:
         low.append(raw_data['response'][x]['l'])
         close.append(raw_data['response'][x]['c'])
 
-frame = frame.assign(Date=time, Open=open, High=high, Low=low, Close=close)
+init_frame = init_frame.assign(Date=time, Open=open, High=high, Low=low, Close=close)
 
     ########################### PREPARING DATA ###########################
 
@@ -67,10 +69,10 @@ def talibate(frame):
     frame['Close'] = frame['Close'].shift(-1) ### Shifting value by 1 day
     return frame
 
-frame['Date'] = pd.to_datetime(frame['Date'])
-frame = frame.set_index('Date')
-raw_frame = frame.copy()
-frame = talibate(frame)
+init_frame['Date'] = pd.to_datetime(init_frame['Date'])
+init_frame = init_frame.set_index('Date')
+raw_frame = init_frame.copy()
+init_frame = talibate(init_frame)
 
     ########################### DATA PREPROCESSING ###########################
 
@@ -82,14 +84,14 @@ def scaleData(frame):
     pred_scaler.fit(frame['Close'].values.reshape(len(frame['Close']), 1))
     for column in frame.columns:
         frame[column] = scaler.fit_transform(frame[column].values.reshape(len(frame[column]), 1))
-    label = frame.dropna()
-    features = frame.drop('Close', axis=1)
-    to_predict_value = features.values[-1].reshape(1, 15)
-    features = features.iloc[0:-1, :]
-    return label, features, to_predict_value
+    feat = frame.drop('Close', axis=1)
+    lab = frame.dropna()
+    pred_value = feat.values[-1].reshape(1, 15)
+    feat = feat.iloc[0:-1, :]
+    return lab, feat, pred_value
 
 
-label, features, to_predict_value = scaleData(frame)
+label, features, to_predict_value = scaleData(init_frame)
 label = label['Close'].iloc[0:].values.reshape(len(label['Close'].iloc[0:]), 1)
 features = features.values
 
@@ -136,16 +138,18 @@ def prepareBatch(s_frame):
 
     n_frame = n_frame.assign(Date=time, Open=open, High=high, Low=low, Close=close)
     n_frame['Date'] = pd.to_datetime(n_frame['Date'])
+    n_frame['Date'].iloc[-1] = n_frame['Date'].iloc[-1] + timedelta(hours=2)
+    n_frame.set_index('Date', inplace=True)
     s_frame = pd.concat([s_frame, n_frame])
     new_frame = talibate(s_frame.copy())
-    label, features, to_predict_value = scaleData(new_frame)
-    features = features.iloc[-5:, :].values
-    return label, features, to_predict_value, s_frame
+    lab, feat, pred_value = scaleData(new_frame)
+    feat = feat.iloc[-5:, :].values
+    return lab, feat, pred_value, s_frame
 
 
-def trainBatch(model, label, features):
-    model.train_on_batch(features, label)
-    return model
+def trainBatch(modelo, lab, feat):
+    modelo.train_on_batch(feat, lab)
+    return modelo
 
 def createPlot(value1, value2):
     pyplot.clf()
@@ -155,6 +159,7 @@ def createPlot(value1, value2):
     pyplot.plot(value1, label='Preds')
     pyplot.plot(value2, label='Reals')
     pyplot.legend()
+    pyplot.show()
 
 
     ########################### MAIN LOOP ###########################
@@ -170,17 +175,20 @@ while tr == 0:
     sleep(3600)
     label, features, to_predict_value, raw_frame = prepareBatch(raw_frame)
     label = label['Close'].iloc[-5:].values.reshape(len(label['Close'].iloc[-5:]), 1)
-    trainBatch(model, label, features)
+    model = trainBatch(model, label, features)
     preds.append(pred_scaler.inverse_transform(model.predict(to_predict_value))[0][0])
     reals.append(pred_scaler.inverse_transform(label[-1].reshape(-1,1))[0][0])
-
     if len(preds) > 24:
         preds.pop(0)
         reals.pop(0)
     if preds[-1] > preds[-2]:
-        mt_part.make_order('Buy')
+        print('###################### BUY BUY BUY ######################')
+        asyncio.run(mt_part.make_order('Buy'))
+        print('Done. Sleeping')
     elif preds[-1] < preds[-2]:
-        mt_part.make_order('Sell')
+        print('###################### SELL SELL SELL ######################')
+        asyncio.run(mt_part.make_order('Sell'))
+        print('Done. Sleeping')
     else:
         pass
 
