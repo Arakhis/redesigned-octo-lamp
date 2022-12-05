@@ -96,6 +96,10 @@ label = label['Close'].iloc[0:].values.reshape(len(label['Close'].iloc[0:]), 1)
 features = features.values
 
     ########################### DEFINE MODEL ###########################
+    
+epoch_num = 20
+batch_size = 8
+window_size = -5
 
 
 model = Sequential(
@@ -111,7 +115,7 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), loss='ms
     ########################### MAIN MODEL TRAINING ###########################
 
 
-model.fit(features, label, epochs=10, batch_size=12, shuffle=False)
+model.fit(features, label, epochs=epoch_num, batch_size=batch_size, shuffle=False)
 
 
     ########################### PREPARING EXT BATCH ###########################
@@ -143,7 +147,7 @@ def prepareBatch(s_frame):
     s_frame = pd.concat([s_frame, n_frame])
     new_frame = talibate(s_frame.copy())
     lab, feat, pred_value = scaleData(new_frame)
-    feat = feat.iloc[-5:, :].values
+    feat = feat.iloc[window_size:, :].values
     return lab, feat, pred_value, s_frame
 
 
@@ -174,7 +178,7 @@ tr = 0
 while tr == 0:
     sleep(3600)
     label, features, to_predict_value, raw_frame = prepareBatch(raw_frame)
-    label = label['Close'].iloc[-5:].values.reshape(len(label['Close'].iloc[-5:]), 1)
+    label = label['Close'].iloc[window_size:].values.reshape(len(label['Close'].iloc[window_size:]), 1)
     model = trainBatch(model, label, features)
     preds.append(pred_scaler.inverse_transform(model.predict(to_predict_value))[0][0])
     reals.append(pred_scaler.inverse_transform(label[-1].reshape(-1,1))[0][0])
