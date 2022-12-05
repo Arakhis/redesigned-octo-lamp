@@ -4,8 +4,8 @@ Forex trading robot using FCSApi for data and MetaApi as MT5 server.
 Use your own API key
 
 ## Disclaimer
-This bot dont predict prices!!! It predicts trend for next hour
-This strategy have good negative Z-score, which means that wins come as series, theoretically you can increase lot after each win (not tested).
+This bot dont predict prices!!! It predicts trend for next hour.
+This strategy have good negative Z-score, theoretically you can increase lot after each win (not tested).
 I dont care about your losses ;)
 
 
