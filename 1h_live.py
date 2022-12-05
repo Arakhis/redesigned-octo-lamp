@@ -159,7 +159,7 @@ def createPlot(value1, value2):
     pyplot.plot(value1, label='Preds')
     pyplot.plot(value2, label='Reals')
     pyplot.legend()
-    pyplot.show()
+    pyplot.pause(0.05)
 
 
     ########################### MAIN LOOP ###########################
