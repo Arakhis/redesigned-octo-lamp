@@ -2,11 +2,12 @@ from metaapi_cloud_sdk import MetaApi
 
 symbolo = 'XAUUSD'
 lot = 0.01
+accountID = ''
 
 async def make_order(type):
     token = ''
     api = MetaApi(token=token)
-    account = await api.metatrader_account_api.get_account(account_id='622f717f-8074-4357-8522-0c33f5f18035')
+    account = await api.metatrader_account_api.get_account(account_id = accountID)
     if account.state == 'DEPLOYING':
         print('Detected DEPLOYING state. Waiting deployed')
         await account.wait_deployed()
