@@ -28,6 +28,7 @@ I dont care about your losses ;)
  - 20 epochs for first train
  - 8 batch size for first train
  - 5 window size for additional trainings
+ 
  Only forward tested!!!
  
  You can modify bot to use trend direction from daily timeframe and open positions on 1H timeframe.
